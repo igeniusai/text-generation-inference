@@ -340,11 +340,9 @@ def get_model(
     else:
         set_speculate(0)
 
-    config_dict, kw = PretrainedConfig.get_config_dict(
+    config_dict, _ = PretrainedConfig.get_config_dict(
         model_id, revision=revision, trust_remote_code=trust_remote_code
     )
-    print("CONFIG")
-    print(config_dict, kw)
     model_type = config_dict.get("model_type", None)
 
     speculator = None
