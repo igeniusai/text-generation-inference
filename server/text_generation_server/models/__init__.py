@@ -60,6 +60,9 @@ FLASH_ATTENTION = True
 try:
     from text_generation_server.models.flash_causal_lm import FlashCausalLM
     from text_generation_server.models.vlm_causal_lm import VlmCausalLM
+    from text_generation_server.models.custom_modeling.flash_italia_modeling import (
+        FlashItaliaForCausalLM,
+    )
     from text_generation_server.models.custom_modeling.flash_deepseek_v2_modeling import (
         FlashDeepseekV2ForCausalLM,
         DeepseekV2Config,
@@ -144,6 +147,11 @@ if MAMBA_AVAILABLE:
 
 
 class ModelType(enum.Enum):
+    ITALIA = {
+        "type": "italia",
+        "name": "Italia",
+        "url": "https://huggingface.co/iGeniusAI/Italia-9B-Instruct-v0.1"
+    }
     DEEPSEEK_V2 = {
         "type": "deepseek_v2",
         "name": "Deepseek V2",
@@ -332,9 +340,11 @@ def get_model(
     else:
         set_speculate(0)
 
-    config_dict, _ = PretrainedConfig.get_config_dict(
+    config_dict, kw = PretrainedConfig.get_config_dict(
         model_id, revision=revision, trust_remote_code=trust_remote_code
     )
+    print("CONFIG")
+    print(config_dict, kw)
     model_type = config_dict.get("model_type", None)
 
     speculator = None
@@ -719,6 +729,29 @@ def get_model(
                 dtype=dtype,
                 trust_remote_code=trust_remote_code,
             )
+    elif model_type == ITALIA:
+        if FLASH_ATTENTION:
+            return FlashCausalLM(
+                model_id=model_id,
+                model_class=FlashItaliaForCausalLM,
+                revision=revision,
+                quantize=quantize,
+                speculator=speculator,
+                dtype=dtype,
+                trust_remote_code=trust_remote_code,
+                lora_adapter_ids=lora_adapter_ids,
+                num_kv_heads=config_dict.get("num_attention_heads", 32)
+            )
+        else:
+            return CausalLM.fallback(
+                model_id,
+                revision,
+                quantize=quantize,
+                speculator=speculator,
+                dtype=dtype,
+                trust_remote_code=trust_remote_code,
+            )
+        
     if model_type == GEMMA:
         if FLASH_ATTENTION:
             return FlashCausalLM(
