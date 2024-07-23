@@ -8,3 +8,4 @@ if [[ -z "${HF_MODEL_ID}" ]]; then
   text-generation-launcher $CARGS $@
 else
   text-generation-launcher $CARGS --model-id "${HF_MODEL_ID}" $@
+fi
